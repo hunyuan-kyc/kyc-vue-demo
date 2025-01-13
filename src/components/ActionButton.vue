@@ -18,7 +18,7 @@
     </div>
   </template>
   
-  <script lang="ts">
+  <script>
   import { ref } from 'vue';
   import { useDisconnect, useAppKit, useAppKitNetwork } from "@reown/appkit/vue";
   import { networks } from "../config/index";
@@ -84,7 +84,7 @@
           console.log('Transaction confirmed:', receipt)
           alert('KYC request confirmed!')
   
-        } catch (error: any) {
+        } catch (error) {
           console.error('Error requesting KYC:', error)
           alert('Error requesting KYC: ' + error.message)
         } finally {
