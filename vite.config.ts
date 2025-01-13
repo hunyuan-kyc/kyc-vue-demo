@@ -7,6 +7,7 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   resolve: {
     alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
       buffer: 'buffer/'
     }
   },
@@ -14,7 +15,7 @@ export default defineConfig({
     vue({
       template: {
         compilerOptions: {
-          isCustomElement: (tag) => ['w3m-button', 'w3m-network-button'].includes(tag),
+          isCustomElement: (tag) => ['w3m-button', 'w3m-network-button', 'appkit-button'].includes(tag),
         },
       },
     }),

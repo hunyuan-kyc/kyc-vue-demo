@@ -5,7 +5,7 @@
 
       <appkit-button />
       <ActionButtonList />
-      <InfoList />
+      <!-- <InfoList /> -->
     </div>
 </template>
 
