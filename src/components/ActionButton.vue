@@ -15,8 +15,21 @@
         <p>ENS Name: {{ kycInfo.ensName }}</p>
         <p>Status: {{ getKycStatusText(kycInfo.status) }}</p>
         <p>Level: {{ getKycLevelText(kycInfo.level) }}</p>
-        <p>Expiration: {{ formatDate(kycInfo.expirationTime) }}</p>
-        <button @click="revokeKyc" :disabled="isProcessing">
+        <p>Created: {{ formatDate(kycInfo.createTime) }}</p>
+        
+        <!-- 当状态是 REVOKED 时显示恢复按钮，否则显示撤销按钮 -->
+        <button 
+          v-if="kycInfo.status === KycStatus.REVOKED"
+          @click="restoreKyc" 
+          :disabled="isProcessing"
+        >
+          {{ isProcessing ? 'Processing...' : 'Restore KYC' }}
+        </button>
+        <button 
+          v-else
+          @click="revokeKyc" 
+          :disabled="isProcessing"
+        >
           {{ isProcessing ? 'Processing...' : 'Revoke KYC' }}
         </button>
       </div>
@@ -40,15 +53,15 @@
 </template>
 
 <script lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useDisconnect, useAppKit, useAppKitNetwork } from "@reown/appkit/vue";
 import { networks } from "../config/index";
 import { createPublicClient, createWalletClient, custom, parseEther } from 'viem'
 import { hashkeyTestnet } from '@reown/appkit/networks'
 import KycSBTAbi from '../abis/KycSBT.json'
+import { KYC_SBT_ADDRESS } from '../config/contracts'
+import { KycLevel, KycStatus } from '../types/kyc'
 import type { KycInfo } from '../types/kyc'
-
-const KYC_CONTRACT_ADDRESS = '0x6a32FAB197356f1eCFB6C5824427D6c8d469099c'
 
 export default {
   name: "ActionButtonList",
@@ -59,13 +72,13 @@ export default {
     const ensNameWithoutSuffix = ref('');
     const isLoading = ref(true);
     const isProcessing = ref(false);
+    const currentAddress = ref<string>('');
+
     const kycInfo = ref<KycInfo>({
       ensName: '',
-      level: 0,
-      status: 0,
-      expirationTime: 0n,
-      ensNode: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      isWhitelisted: false
+      level: KycLevel.NONE,
+      status: KycStatus.NONE,
+      createTime: 0n,
     });
 
     const openAppKit = () => open();
@@ -99,24 +112,21 @@ export default {
         const publicClient = getPublicClient()
         const walletClient = getWalletClient()
         const [address] = await walletClient.requestAddresses()
-
+        console.log('Using KYC address:', KYC_SBT_ADDRESS)
         const info = await publicClient.readContract({
-          address: KYC_CONTRACT_ADDRESS,
+          address: KYC_SBT_ADDRESS,
           abi: KycSBTAbi,
-          functionName: 'kycInfos',
+          functionName: 'getKycInfo',
           args: [address],
-        }) as [string, number, number, bigint, `0x${string}`, boolean]
+        }) as [string, number, number, bigint]
 
         console.log(info, 'info checkKycStatus')
         
-        // 解构数组并赋值给对象
         kycInfo.value = {
           ensName: info[0],
-          level: info[1],
-          status: info[2],
-          expirationTime: info[3],
-          ensNode: info[4],
-          isWhitelisted: info[5]
+          level: info[1] as KycLevel,
+          status: info[2] as KycStatus,
+          createTime: info[3],
         }
       } catch (error) {
         console.error('Error checking KYC status:', error)
@@ -124,6 +134,31 @@ export default {
         isLoading.value = false
       }
     }
+
+    const getCurrentAddress = async () => {
+      try {
+        const walletClient = getWalletClient()
+        const [address] = await walletClient.requestAddresses()
+        return address
+      } catch (error) {
+        console.error('Error getting current address:', error)
+        return ''
+      }
+    }
+
+    const updateAddressAndKycStatus = async () => {
+      const address = await getCurrentAddress()
+      if (address !== currentAddress.value) {
+        currentAddress.value = address
+        await checkKycStatus()
+      }
+    }
+
+    watch(currentAddress, async (newAddress, oldAddress) => {
+      if (newAddress && newAddress !== oldAddress) {
+        await checkKycStatus()
+      }
+    })
 
     const requestKyc = async () => {
       if (!ensNameWithoutSuffix.value) {
@@ -136,14 +171,15 @@ export default {
 
       try {
         isProcessing.value = true;
+        await updateAddressAndKycStatus();
         const walletClient = getWalletClient()
         const [address] = await walletClient.requestAddresses()
 
         const publicClient = getPublicClient()
         const { request } = await publicClient.simulateContract({
-          address: KYC_CONTRACT_ADDRESS,
+          address: KYC_SBT_ADDRESS,
           abi: KycSBTAbi,
-          functionName: 'requestKycAndApprove',
+          functionName: 'requestKyc',
           args: [fullEnsName], // 使用带后缀的完整名称
           account: address,
           value: parseEther('0.01')
@@ -171,12 +207,13 @@ export default {
     const revokeKyc = async () => {
       try {
         isProcessing.value = true;
+        await updateAddressAndKycStatus();
         const walletClient = getWalletClient()
         const [address] = await walletClient.requestAddresses()
 
         const publicClient = getPublicClient()
         const { request } = await publicClient.simulateContract({
-          address: KYC_CONTRACT_ADDRESS,
+          address: KYC_SBT_ADDRESS,
           abi: KycSBTAbi,
           functionName: 'revokeKyc',
           args: [address],
@@ -202,25 +239,58 @@ export default {
       }
     }
 
-    const getKycStatusText = (status: number) => {
-      const statusMap = {
-        1: 'Pending',
-        2: 'Approved',
-        3: 'Rejected',
-        4: 'Revoked'
+    const restoreKyc = async () => {
+      try {
+        isProcessing.value = true;
+        await updateAddressAndKycStatus();
+        const walletClient = getWalletClient()
+        const [address] = await walletClient.requestAddresses()
+
+        const publicClient = getPublicClient()
+        const { request } = await publicClient.simulateContract({
+          address: KYC_SBT_ADDRESS,
+          abi: KycSBTAbi,
+          functionName: 'restoreKyc',
+          args: [address],
+          account: address
+        })
+
+        const hash = await walletClient.writeContract(request)
+        console.log('Transaction Hash:', hash)
+        
+        alert('KYC restore submitted. Waiting for confirmation...')
+        
+        const receipt = await publicClient.waitForTransactionReceipt({ hash })
+        console.log('Transaction confirmed:', receipt)
+        alert('KYC restored successfully!')
+
+        // Refresh KYC status
+        await checkKycStatus()
+      } catch (error: any) {
+        console.error('Error restoring KYC:', error)
+        alert('Error restoring KYC: ' + error.message)
+      } finally {
+        isProcessing.value = false
       }
-      // @ts-ignore
+    }
+
+    const getKycStatusText = (status: KycStatus) => {
+      const statusMap: Record<KycStatus, string> = {
+        [KycStatus.NONE]: 'None',
+        [KycStatus.APPROVED]: 'Approved',
+        [KycStatus.REVOKED]: 'Revoked'
+      }
       return statusMap[status] || 'Unknown'
     }
 
-    const getKycLevelText = (level: number) => {
-      const levelMap = {
-        0: 'None',
-        1: 'Basic',
-        2: 'Advanced',
-        3: 'PREMIUM'
+    const getKycLevelText = (level: KycLevel) => {
+      const levelMap: Record<KycLevel, string> = {
+        [KycLevel.NONE]: 'None',
+        [KycLevel.BASIC]: 'Basic',
+        [KycLevel.ADVANCED]: 'Advanced',
+        [KycLevel.PREMIUM]: 'Premium',
+        [KycLevel.ULTIMATE]: 'Ultimate'
       }
-      // @ts-ignore
       return levelMap[level] || 'Unknown'
     }
 
@@ -230,8 +300,14 @@ export default {
     }
 
     onMounted(async () => {
-      await checkKycStatus()
+      await updateAddressAndKycStatus()
     })
+
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', async () => {
+        await updateAddressAndKycStatus()
+      })
+    }
 
     return {
       disconnect,
@@ -245,7 +321,10 @@ export default {
       kycInfo,
       getKycStatusText,
       getKycLevelText,
-      formatDate
+      formatDate,
+      restoreKyc,
+      KycStatus,
+      currentAddress,
     };
   },
 };

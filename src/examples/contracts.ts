@@ -1,6 +1,7 @@
 import { parseAbi } from 'viem'
+import { VITE_KYC_SBT_ADDRESS } from '../config/contracts'
 
-export const KYC_CONTRACT_ADDRESS = '0x6a32FAB197356f1eCFB6C5824427D6c8d469099c'
+export { VITE_KYC_SBT_ADDRESS }
 
 export const KYC_ABI = parseAbi([
   // 事件

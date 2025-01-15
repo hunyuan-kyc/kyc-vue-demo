@@ -1,7 +1,7 @@
 import { createPublicClient, createWalletClient, http, type Address, type WalletClient } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { hashkeyTestnet } from 'viem/chains'
-import { KYC_CONTRACT_ADDRESS, KYC_ABI } from '../contracts'
+import { VITE_KYC_SBT_ADDRESS, KYC_ABI } from '../contracts'
 import { type KycInfo, KycLevel, KycStatus } from '../types'
 
 const publicClient = createPublicClient({
@@ -26,13 +26,13 @@ export class UserOperations {
   async requestKyc(ensName: string) {
     try {
       const fee = await publicClient.readContract({
-        address: KYC_CONTRACT_ADDRESS,
+        address: VITE_KYC_SBT_ADDRESS,
         abi: KYC_ABI,
         functionName: 'registrationFee',
       })
 
       const { request } = await publicClient.simulateContract({
-        address: KYC_CONTRACT_ADDRESS,
+        address: VITE_KYC_SBT_ADDRESS,
         abi: KYC_ABI,
         functionName: 'requestKyc',
         args: [ensName],
@@ -53,13 +53,13 @@ export class UserOperations {
   async requestKycAndApprove(ensName: string) {
     try {
       const fee = await publicClient.readContract({
-        address: KYC_CONTRACT_ADDRESS,
+        address: VITE_KYC_SBT_ADDRESS,
         abi: KYC_ABI,
         functionName: 'registrationFee',
       })
 
       const { request } = await publicClient.simulateContract({
-        address: KYC_CONTRACT_ADDRESS,
+        address: VITE_KYC_SBT_ADDRESS,
         abi: KYC_ABI,
         functionName: 'requestKycAndApprove',
         args: [ensName],
@@ -80,7 +80,7 @@ export class UserOperations {
   async revokeKyc(userAddress: Address) {
     try {
       const { request } = await publicClient.simulateContract({
-        address: KYC_CONTRACT_ADDRESS,
+        address: VITE_KYC_SBT_ADDRESS,
         abi: KYC_ABI,
         functionName: 'revokeKyc',
         args: [userAddress],
@@ -100,7 +100,7 @@ export class UserOperations {
   async checkKycStatus(address: Address) {
     try {
       const [isValid, level] = await publicClient.readContract({
-        address: KYC_CONTRACT_ADDRESS,
+        address: VITE_KYC_SBT_ADDRESS,
         abi: KYC_ABI,
         functionName: 'isHuman',
         args: [address]
@@ -116,7 +116,7 @@ export class UserOperations {
   async getKycInfo(address: Address) {
     try {
       const info = await publicClient.readContract({
-        address: KYC_CONTRACT_ADDRESS,
+        address: VITE_KYC_SBT_ADDRESS,
         abi: KYC_ABI,
         functionName: 'kycInfos',
         args: [address],
