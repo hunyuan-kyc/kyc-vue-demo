@@ -1,7 +1,8 @@
 import { createPublicClient, createWalletClient, http, type Address, type WalletClient } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { hashkeyTestnet } from 'viem/chains'
-import { VITE_KYC_SBT_ADDRESS, KYC_ABI } from '../contracts'
+import { KYC_SBT_ADDRESS } from '@/config/contracts'
+import KycSBTAbi from '@/abis/KycSBT.json'
 
 const publicClient = createPublicClient({
   chain: hashkeyTestnet,
@@ -22,11 +23,11 @@ export class OwnerOperations {
     })
   }
 
-  async setRegistrationFee(newFee: bigint) {
+  async setRegistrationFee(newFee: string) {
     try {
       const { request } = await publicClient.simulateContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
         functionName: 'setRegistrationFee',
         args: [newFee],
         account: this.account
@@ -45,8 +46,8 @@ export class OwnerOperations {
   async setMinNameLength(newLength: bigint) {
     try {
       const { request } = await publicClient.simulateContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
         functionName: 'setMinNameLength',
         args: [newLength],
         account: this.account
@@ -65,8 +66,8 @@ export class OwnerOperations {
   async setSuffix(newSuffix: string) {
     try {
       const { request } = await publicClient.simulateContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
         functionName: 'setSuffix',
         args: [newSuffix],
         account: this.account
@@ -85,8 +86,8 @@ export class OwnerOperations {
   async setENSAndResolver(ensAddress: Address, resolverAddress: Address) {
     try {
       const { request } = await publicClient.simulateContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
         functionName: 'setENSAndResolver',
         args: [ensAddress, resolverAddress],
         account: this.account
@@ -105,8 +106,8 @@ export class OwnerOperations {
   async transferOwnership(newOwner: Address) {
     try {
       const { request } = await publicClient.simulateContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
         functionName: 'transferOwnership',
         args: [newOwner],
         account: this.account
@@ -125,8 +126,8 @@ export class OwnerOperations {
   async withdrawFees() {
     try {
       const { request } = await publicClient.simulateContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
         functionName: 'withdrawFees',
         account: this.account
       })
@@ -145,18 +146,18 @@ export class OwnerOperations {
     try {
       const [fee, minLength, suffix] = await Promise.all([
         publicClient.readContract({
-          address: VITE_KYC_SBT_ADDRESS,
-          abi: KYC_ABI,
+          address: KYC_SBT_ADDRESS,
+          abi: KycSBTAbi,
           functionName: 'registrationFee'
         }),
         publicClient.readContract({
-          address: VITE_KYC_SBT_ADDRESS,
-          abi: KYC_ABI,
+          address: KYC_SBT_ADDRESS,
+          abi: KycSBTAbi,
           functionName: 'minNameLength'
         }),
         publicClient.readContract({
-          address: VITE_KYC_SBT_ADDRESS,
-          abi: KYC_ABI,
+          address: KYC_SBT_ADDRESS,
+          abi: KycSBTAbi,
           functionName: 'suffix'
         })
       ])

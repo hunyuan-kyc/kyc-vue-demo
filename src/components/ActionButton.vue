@@ -304,6 +304,7 @@ export default {
     })
 
     if (window.ethereum) {
+      // @ts-ignore
       window.ethereum.on('accountsChanged', async () => {
         await updateAddressAndKycStatus()
       })

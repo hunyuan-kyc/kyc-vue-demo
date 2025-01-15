@@ -1,8 +1,9 @@
-import { createPublicClient, createWalletClient, http, type Address, type WalletClient } from 'viem'
+import { createPublicClient, createWalletClient, http, type Address, type WalletClient, parseEther } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { hashkeyTestnet } from 'viem/chains'
-import { VITE_KYC_SBT_ADDRESS, KYC_ABI } from '../contracts'
-import { type KycInfo, KycLevel, KycStatus } from '../types'
+import { KYC_SBT_ADDRESS } from '@/config/contracts'
+import KycSBTAbi from '@/abis/KycSBT.json'
+import { type KycInfo, KycLevel, KycStatus } from '../types/index'
 
 const publicClient = createPublicClient({
   chain: hashkeyTestnet,
@@ -25,19 +26,13 @@ export class UserOperations {
 
   async requestKyc(ensName: string) {
     try {
-      const fee = await publicClient.readContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
-        functionName: 'registrationFee',
-      })
-
       const { request } = await publicClient.simulateContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
         functionName: 'requestKyc',
         args: [ensName],
-        value: fee,
-        account: this.account
+        account: this.account,
+        value: parseEther('0.01')
       })
 
       const hash = await this.client.writeContract(request)
@@ -50,40 +45,13 @@ export class UserOperations {
     }
   }
 
-  async requestKycAndApprove(ensName: string) {
-    try {
-      const fee = await publicClient.readContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
-        functionName: 'registrationFee',
-      })
-
-      const { request } = await publicClient.simulateContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
-        functionName: 'requestKycAndApprove',
-        args: [ensName],
-        value: fee,
-        account: this.account
-      })
-
-      const hash = await this.client.writeContract(request)
-      const receipt = await publicClient.waitForTransactionReceipt({ hash })
-      console.log('KYC auto approved:', receipt)
-      return receipt
-    } catch (error) {
-      console.error('Error in auto KYC:', error)
-      throw error
-    }
-  }
-
-  async revokeKyc(userAddress: Address) {
+  async revokeKyc() {
     try {
       const { request } = await publicClient.simulateContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
         functionName: 'revokeKyc',
-        args: [userAddress],
+        args: [this.account],
         account: this.account
       })
 
@@ -97,18 +65,22 @@ export class UserOperations {
     }
   }
 
-  async checkKycStatus(address: Address) {
+  async restoreKyc() {
     try {
-      const [isValid, level] = await publicClient.readContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
-        functionName: 'isHuman',
-        args: [address]
+      const { request } = await publicClient.simulateContract({
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
+        functionName: 'restoreKyc',
+        args: [this.account],
+        account: this.account
       })
-      
-      return { isValid, level: level as KycLevel }
+
+      const hash = await this.client.writeContract(request)
+      const receipt = await publicClient.waitForTransactionReceipt({ hash })
+      console.log('KYC restored:', receipt)
+      return receipt
     } catch (error) {
-      console.error('Error checking KYC status:', error)
+      console.error('Error restoring KYC:', error)
       throw error
     }
   }
@@ -116,31 +88,22 @@ export class UserOperations {
   async getKycInfo(address: Address) {
     try {
       const info = await publicClient.readContract({
-        address: VITE_KYC_SBT_ADDRESS,
-        abi: KYC_ABI,
-        functionName: 'kycInfos',
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
+        functionName: 'getKycInfo',
         args: [address],
-      }) as [string, number, number, bigint, `0x${string}`, boolean]
+      }) as [string, number, number, bigint]
 
-      return {
+      const kycInfo: KycInfo = {
         ensName: info[0],
         level: info[1] as KycLevel,
         status: info[2] as KycStatus,
-        expirationTime: info[3],
-        ensNode: info[4],
-        isWhitelisted: info[5]
-      } satisfies KycInfo
+        createTime: info[3]
+      }
+
+      return kycInfo
     } catch (error) {
       console.error('Error getting KYC info:', error)
-      throw error
-    }
-  }
-
-  async getCurrentKycInfo() {
-    try {
-      return await this.getKycInfo(this.account)
-    } catch (error) {
-      console.error('Error getting current KYC info:', error)
       throw error
     }
   }
