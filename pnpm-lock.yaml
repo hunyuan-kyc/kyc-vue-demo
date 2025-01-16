@@ -36,12 +36,6 @@ importers:
       '@tsconfig/node20':
         specifier: ^20.1.4
         version: 20.1.4
-      '@types/clipboard':
-        specifier: ^2.0.10
-        version: 2.0.10
-      '@types/highlight.js':
-        specifier: ^10.1.0
-        version: 10.1.0
       '@types/node':
         specifier: ^20.17.0
         version: 20.17.5
@@ -1590,10 +1584,6 @@ packages:
   '@types/babel__traverse@7.20.6':
     resolution: {integrity: sha512-r1bzfrm0tomOI8g1SzvCaQHo6Lcv6zu0EA+W2kHrt8dyrHQxGzBBL4kdkzIS+jBMV+EYcMAEAqXqYaLJq5rOZg==}
 
-  '@types/clipboard@2.0.10':
-    resolution: {integrity: sha512-6CIsNdBfOTN92GHhQ0BaGY9KoV4DPH7ynCk5eggSDy3HW7OHLKWJUskL72uoVxl2kZ/XCq28TEgI0HKxLbRxyQ==}
-    deprecated: This is a stub types definition. clipboard provides its own type definitions, so you do not need this installed.
-
   '@types/debug@4.1.12':
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
 
@@ -1602,10 +1592,6 @@ packages:
 
   '@types/graceful-fs@4.1.9':
     resolution: {integrity: sha512-olP3sd1qOEe5dXTSaFvQG+02VdRXcdytWLAZsAq1PecU8uqQAhkrnbli7DagjtXKW/Bl7YJbUsa8MPcuc8LHEQ==}
-
-  '@types/highlight.js@10.1.0':
-    resolution: {integrity: sha512-77hF2dGBsOgnvZll1vymYiNUtqJ8cJfXPD6GG/2M0aLRc29PkvB7Au6sIDjIEFcSICBhCh2+Pyq6WSRS7LUm6A==}
-    deprecated: This is a stub types definition. highlight.js provides its own type definitions, so you do not need this installed.
 
   '@types/istanbul-lib-coverage@2.0.6':
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
@@ -6161,10 +6147,6 @@ snapshots:
     dependencies:
       '@babel/types': 7.26.0
 
-  '@types/clipboard@2.0.10':
-    dependencies:
-      clipboard: 2.0.11
-
   '@types/debug@4.1.12':
     dependencies:
       '@types/ms': 0.7.34
@@ -6174,10 +6156,6 @@ snapshots:
   '@types/graceful-fs@4.1.9':
     dependencies:
       '@types/node': 20.17.5
-
-  '@types/highlight.js@10.1.0':
-    dependencies:
-      highlight.js: 11.11.1
 
   '@types/istanbul-lib-coverage@2.0.6': {}
 

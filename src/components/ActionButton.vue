@@ -1,5 +1,11 @@
 <template>
   <div>
+        
+    <!-- 添加余额显示 -->
+    <div class="contract-info">
+      <p>Balance: {{ formatBalance }} HSK</p>
+    </div>
+
     <button @click="openAppKit">Open</button>
     <button @click="disconnect">Disconnect</button>
     
@@ -16,7 +22,7 @@
       </p>
     </div>
     <div class="contract-info">
-      <p>gitHub: 
+      <p>GitHub: 
         <a 
           href="https://github.com/hunyuan-kyc/kyc-vue-demo" 
           target="_blank"
@@ -26,6 +32,18 @@
         </a>
       </p>
     </div>
+    <div class="contract-info">
+      <p>ABI : 
+        <a 
+          href="https://github.com/hunyuan-kyc/kyc-vue-demo/blob/master/src/abis/KycSBT.json" 
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+        https://github.com/hunyuan-kyc/kyc-vue-demo/blob/master/src/abis/KycSBT.json
+        </a>
+      </p>
+    </div>
+
     
     <!-- KYC Status Section -->
     <div class="kyc-section" v-if="isLoading">
@@ -76,10 +94,10 @@
 </template>
 
 <script lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useDisconnect, useAppKit, useAppKitNetwork } from "@reown/appkit/vue";
 import { networks } from "../config/index";
-import { createPublicClient, createWalletClient, custom, parseEther } from 'viem'
+import { createPublicClient, createWalletClient, custom, parseEther, formatEther } from 'viem'
 import { hashkeyTestnet } from '@reown/appkit/networks'
 import KycSBTAbi from '../abis/KycSBT.json'
 import { KYC_SBT_ADDRESS } from '../config/contracts'
@@ -96,6 +114,7 @@ export default {
     const isLoading = ref(true);
     const isProcessing = ref(false);
     const currentAddress = ref<string>('');
+    const balance = ref<bigint>(0n)
 
     const kycInfo = ref<KycInfo>({
       ensName: '',
@@ -169,18 +188,51 @@ export default {
       }
     }
 
+    const formatBalance = computed(() => {
+      return Number(formatEther(balance.value)).toFixed(4)
+    })
+
+    const getBalance = async (address: string) => {
+      try {
+        const publicClient = getPublicClient()
+        const newBalance = await publicClient.getBalance({ address: address as `0x${string}` })
+        balance.value = newBalance
+      } catch (error) {
+        console.error('Error getting balance:', error)
+      }
+    }
+
     const updateAddressAndKycStatus = async () => {
       const address = await getCurrentAddress()
       if (address !== currentAddress.value) {
         currentAddress.value = address
-        await checkKycStatus()
+        await Promise.all([
+          checkKycStatus(),
+          getBalance(address)
+        ])
       }
     }
 
-    watch(currentAddress, async (newAddress, oldAddress) => {
-      if (newAddress && newAddress !== oldAddress) {
-        await checkKycStatus()
+    // 监听地址变化
+    watch(currentAddress, async (newAddress) => {
+      if (newAddress) {
+        await Promise.all([
+          checkKycStatus(),
+          getBalance(newAddress)
+        ])
       }
+    })
+
+    // 监听区块变化以更新余额
+    onMounted(() => {
+      const publicClient = getPublicClient()
+      publicClient.watchBlocks({
+        onBlock: async () => {
+          if (currentAddress.value) {
+            await getBalance(currentAddress.value)
+          }
+        },
+      })
     })
 
     const requestKyc = async () => {
@@ -350,6 +402,7 @@ export default {
       KycStatus,
       currentAddress,
       KYC_SBT_ADDRESS,
+      formatBalance,
     };
   },
 };
@@ -427,3 +480,4 @@ button:disabled {
   text-decoration: underline;
 }
 </style>
+

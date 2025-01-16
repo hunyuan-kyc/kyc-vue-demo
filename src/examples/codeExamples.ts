@@ -5,6 +5,23 @@ import { KYC_SBT_ADDRESS } from '@/config/contracts'
 import KycSBTAbi from '@/abis/KycSBT.json'
 import { type KycInfo, KycLevel, KycStatus } from '../types/index'
 
+/**
+ * KYC Level Definition:
+ * - NONE (0): No KYC verification
+ * - BASIC (1): Basic level verification
+ * - ADVANCED (2): Advanced level verification
+ * - PREMIUM (3): Premium level verification
+ * - ULTIMATE (4): Ultimate level verification
+ */
+
+/**
+ * KYC Status Definition:
+ * - NONE (0): Not requested or initialized
+ * - APPROVED (1): KYC verification approved
+ * - REVOKED (2): KYC verification revoked
+ */
+
+// Initialize public client for read operations
 const publicClient = createPublicClient({
   chain: hashkeyTestnet,
   transport: http('https://hk-testnet.rpc.alt.technology')
@@ -24,6 +41,11 @@ export class UserOperations {
     })
   }
 
+  /**
+   * Request KYC verification with ENS name
+   * @param ensName - ENS name without .hsk suffix
+   * @returns Transaction receipt
+   */
   async requestKyc(ensName: string) {
     try {
       const { request } = await publicClient.simulateContract({
@@ -32,7 +54,7 @@ export class UserOperations {
         functionName: 'requestKyc',
         args: [ensName],
         account: this.account,
-        value: parseEther('0.01')
+        value: parseEther('0.01') // Registration fee: 0.01 ETH
       })
 
       const hash = await this.client.writeContract(request)
@@ -44,6 +66,10 @@ export class UserOperations {
     }
   }
 
+  /**
+   * Revoke own KYC verification
+   * Users can revoke their own KYC if they want to
+   */
   async revokeKyc() {
     try {
       const { request } = await publicClient.simulateContract({
@@ -63,6 +89,10 @@ export class UserOperations {
     }
   }
 
+  /**
+   * Restore previously revoked KYC
+   * Only works if the KYC was previously approved and then revoked
+   */
   async restoreKyc() {
     try {
       const { request } = await publicClient.simulateContract({
@@ -82,6 +112,16 @@ export class UserOperations {
     }
   }
 
+  /**
+   * Get KYC information for an address
+   * @param address - Address to check
+   * @returns KYC information including ENS name, level, status and creation time
+   * 
+   * KYC Status Check:
+   * 1. If level is NONE (0) -> No KYC
+   * 2. If level > 0 but status is REVOKED -> KYC is currently revoked
+   * 3. If level > 0 and status is APPROVED -> KYC is valid
+   */
   async getKycInfo(address: Address) {
     try {
       const info = await publicClient.readContract({
@@ -105,6 +145,15 @@ export class UserOperations {
     }
   }
 
+  /**
+   * Quick check if an address is human verified
+   * @param address - Address to check
+   * @returns {isValid: boolean, level: KycLevel}
+   * 
+   * isValid will be:
+   * - true if the address has valid KYC (level > 0 and status is APPROVED)
+   * - false if no KYC or KYC is revoked
+   */
   async isHuman(address: Address) {
     try {
       const [isValid, level] = await publicClient.readContract({
