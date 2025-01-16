@@ -42,77 +42,6 @@ export class UserOperations {
   }
 
   /**
-   * Request KYC verification with ENS name
-   * @param ensName - ENS name without .hsk suffix
-   * @returns Transaction receipt
-   */
-  async requestKyc(ensName: string) {
-    try {
-      const { request } = await publicClient.simulateContract({
-        address: KYC_SBT_ADDRESS,
-        abi: KycSBTAbi,
-        functionName: 'requestKyc',
-        args: [ensName],
-        account: this.account,
-        value: parseEther('0.01') // Registration fee: 0.01 ETH
-      })
-
-      const hash = await this.client.writeContract(request)
-      const receipt = await publicClient.waitForTransactionReceipt({ hash })
-      return receipt
-    } catch (error) {
-      console.error('Error requesting KYC:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Revoke own KYC verification
-   * Users can revoke their own KYC if they want to
-   */
-  async revokeKyc() {
-    try {
-      const { request } = await publicClient.simulateContract({
-        address: KYC_SBT_ADDRESS,
-        abi: KycSBTAbi,
-        functionName: 'revokeKyc',
-        args: [this.account],
-        account: this.account
-      })
-
-      const hash = await this.client.writeContract(request)
-      const receipt = await publicClient.waitForTransactionReceipt({ hash })
-      return receipt
-    } catch (error) {
-      console.error('Error revoking KYC:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Restore previously revoked KYC
-   * Only works if the KYC was previously approved and then revoked
-   */
-  async restoreKyc() {
-    try {
-      const { request } = await publicClient.simulateContract({
-        address: KYC_SBT_ADDRESS,
-        abi: KycSBTAbi,
-        functionName: 'restoreKyc',
-        args: [this.account],
-        account: this.account
-      })
-
-      const hash = await this.client.writeContract(request)
-      const receipt = await publicClient.waitForTransactionReceipt({ hash })
-      return receipt
-    } catch (error) {
-      console.error('Error restoring KYC:', error)
-      throw error
-    }
-  }
-
-  /**
    * Get KYC information for an address
    * @param address - Address to check
    * @returns KYC information including ENS name, level, status and creation time
@@ -221,34 +150,6 @@ contract KycDemo {
     
     constructor(address _kycSBT) {
         kycSBT = IKycSBT(_kycSBT);
-    }
-    
-    /**
-     * @notice Request KYC verification with ENS name
-     * @param ensName The ENS name to register
-     */
-    function requestUserKyc(string calldata ensName) external payable {
-        // Forward the call to KycSBT contract
-        kycSBT.requestKyc{value: msg.value}(ensName);
-        emit KycRequested(msg.sender, ensName);
-    }
-    
-    /**
-     * @notice Revoke user's KYC status
-     * @param user Address of the user to revoke
-     */
-    function revokeUserKyc(address user) external {
-        kycSBT.revokeKyc(user);
-        emit KycRevoked(user);
-    }
-    
-    /**
-     * @notice Restore user's KYC status
-     * @param user Address of the user to restore
-     */
-    function restoreUserKyc(address user) external {
-        kycSBT.restoreKyc(user);
-        emit KycRestored(user);
     }
     
     /**
