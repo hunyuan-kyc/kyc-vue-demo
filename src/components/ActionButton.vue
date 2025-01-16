@@ -2,7 +2,30 @@
   <div>
     <button @click="openAppKit">Open</button>
     <button @click="disconnect">Disconnect</button>
-    <button @click="switchToNetwork">Switch</button>
+    
+    <!-- 添加合约地址显示 -->
+    <div class="contract-info">
+      <p>Contract Address: 
+        <a 
+          :href="`https://hashkeychain-testnet-explorer.alt.technology/address/${KYC_SBT_ADDRESS}`" 
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ KYC_SBT_ADDRESS }}
+        </a>
+      </p>
+    </div>
+    <div class="contract-info">
+      <p>gitHub: 
+        <a 
+          href="https://github.com/hunyuan-kyc/kyc-vue-demo" 
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+        https://github.com/hunyuan-kyc/kyc-vue-demo
+        </a>
+      </p>
+    </div>
     
     <!-- KYC Status Section -->
     <div class="kyc-section" v-if="isLoading">
@@ -326,6 +349,7 @@ export default {
       restoreKyc,
       KycStatus,
       currentAddress,
+      KYC_SBT_ADDRESS,
     };
   },
 };
@@ -385,5 +409,21 @@ button:disabled {
   color: #666;
   pointer-events: none;
   user-select: none;
+}
+
+.contract-info {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.contract-info a {
+  color: #0066cc;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.contract-info a:hover {
+  text-decoration: underline;
 }
 </style>

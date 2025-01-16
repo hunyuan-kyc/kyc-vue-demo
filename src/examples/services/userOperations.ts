@@ -107,4 +107,23 @@ export class UserOperations {
       throw error
     }
   }
+
+  async isHuman(address: Address) {
+    try {
+      const [isValid, level] = await publicClient.readContract({
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
+        functionName: 'isHuman',
+        args: [address],
+      }) as [boolean, number]
+
+      return {
+        isValid,
+        level: level as KycLevel
+      }
+    } catch (error) {
+      console.error('Error checking human status:', error)
+      throw error
+    }
+  }
 } 
