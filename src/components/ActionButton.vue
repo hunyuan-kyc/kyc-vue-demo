@@ -235,13 +235,27 @@ export default {
       })
     })
 
+    const getTotalFee = async () => {
+      try {
+        const publicClient = getPublicClient()
+        const fee = await publicClient.readContract({
+          address: KYC_SBT_ADDRESS,
+          abi: KycSBTAbi,
+          functionName: 'getTotalFee',
+        }) as bigint
+        return fee
+      } catch (error) {
+        console.error('Error getting total fee:', error)
+        throw error
+      }
+    }
+
     const requestKyc = async () => {
       if (!ensNameWithoutSuffix.value) {
         alert('Please enter an ENS name')
         return
       }
 
-      // 添加 .hsk 后缀
       const fullEnsName = `${ensNameWithoutSuffix.value}.hsk`
 
       try {
@@ -250,14 +264,17 @@ export default {
         const walletClient = getWalletClient()
         const [address] = await walletClient.requestAddresses()
 
+        // 获取总费用
+        const totalFee = await getTotalFee()
+
         const publicClient = getPublicClient()
         const { request } = await publicClient.simulateContract({
           address: KYC_SBT_ADDRESS,
           abi: KycSBTAbi,
           functionName: 'requestKyc',
-          args: [fullEnsName], // 使用带后缀的完整名称
+          args: [fullEnsName],
           account: address,
-          value: parseEther('0.01')
+          value: totalFee  // 使用获取到的总费用
         })
 
         const hash = await walletClient.writeContract(request)
@@ -269,7 +286,6 @@ export default {
         console.log('Transaction confirmed:', receipt)
         alert('KYC request confirmed!')
 
-        // Refresh KYC status
         await checkKycStatus()
       } catch (error: any) {
         console.error('Error requesting KYC:', error)

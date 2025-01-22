@@ -17,8 +17,9 @@ import { type KycInfo, KycLevel, KycStatus } from '../types/index'
 /**
  * KYC Status Definition:
  * - NONE (0): Not requested or initialized
- * - APPROVED (1): KYC verification approved
- * - REVOKED (2): KYC verification revoked
+ * - PENDING (1): KYC request submitted, waiting for approval
+ * - APPROVED (2): KYC verification approved
+ * - REVOKED (3): KYC verification revoked
  */
 
 // Initialize public client for read operations
@@ -39,6 +40,24 @@ export class UserOperations {
       chain: hashkeyTestnet,
       transport: http('https://hk-testnet.rpc.alt.technology')
     })
+  }
+
+  /**
+   * Get total fee required for KYC registration
+   * Includes both registration fee and ENS fee
+   */
+  async getTotalFee() {
+    try { 
+      const fee = await publicClient.readContract({
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
+        functionName: 'getTotalFee',
+      })
+      return fee as bigint
+    } catch (error) {
+      console.error('Error getting total fee:', error)
+      throw error
+    }
   }
 
   /**
@@ -108,7 +127,7 @@ pragma solidity ^0.8.19;
 
 interface IKycSBT {
     enum KycLevel { NONE, BASIC, ADVANCED, PREMIUM, ULTIMATE }
-    enum KycStatus { NONE, APPROVED, REVOKED }
+    enum KycStatus { NONE, PENDING, APPROVED, REVOKED }
 
     // Events
     event KycRequested(address indexed user, string ensName);
@@ -118,6 +137,8 @@ interface IKycSBT {
     event KycRestored(address indexed user);
     event AddressApproved(address indexed user, KycLevel level);
     event ValidityPeriodUpdated(uint256 newPeriod);
+    event RegistrationFeeUpdated(uint256 newFee);
+    event EnsFeeUpdated(uint256 newFee);
 
     // Core functions
     function requestKyc(string calldata ensName) external payable;
@@ -133,6 +154,10 @@ interface IKycSBT {
 
     // Configuration functions
     function setValidityPeriod(uint256 newPeriod) external;
+    function approveKyc(address user) external;
+    function setRegistrationFee(uint256 newFee) external;
+    function setEnsFee(uint256 newFee) external;
+    function getTotalFee() external view returns (uint256);
 }
 
 /**

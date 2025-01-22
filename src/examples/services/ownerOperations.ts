@@ -142,13 +142,58 @@ export class OwnerOperations {
     }
   }
 
+  async setEnsFee(newFee: bigint) {
+    try {
+      const { request } = await publicClient.simulateContract({
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
+        functionName: 'setEnsFee',
+        args: [newFee],
+        account: this.account
+      })
+
+      const hash = await this.client.writeContract(request)
+      const receipt = await publicClient.waitForTransactionReceipt({ hash })
+      console.log('ENS fee updated:', receipt)
+      return receipt
+    } catch (error) {
+      console.error('Error setting ENS fee:', error)
+      throw error
+    }
+  }
+
+  async approveKyc(user: Address) {
+    try {
+      const { request } = await publicClient.simulateContract({
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
+        functionName: 'approveKyc',
+        args: [user],
+        account: this.account
+      })
+
+      const hash = await this.client.writeContract(request)
+      const receipt = await publicClient.waitForTransactionReceipt({ hash })
+      console.log('KYC approved:', receipt)
+      return receipt
+    } catch (error) {
+      console.error('Error approving KYC:', error)
+      throw error
+    }
+  }
+
   async getContractConfig() {
     try {
-      const [fee, minLength, suffix] = await Promise.all([
+      const [registrationFee, ensFee, minLength, suffix, validityPeriod] = await Promise.all([
         publicClient.readContract({
           address: KYC_SBT_ADDRESS,
           abi: KycSBTAbi,
           functionName: 'registrationFee'
+        }),
+        publicClient.readContract({
+          address: KYC_SBT_ADDRESS,
+          abi: KycSBTAbi,
+          functionName: 'ensFee'
         }),
         publicClient.readContract({
           address: KYC_SBT_ADDRESS,
@@ -159,13 +204,20 @@ export class OwnerOperations {
           address: KYC_SBT_ADDRESS,
           abi: KycSBTAbi,
           functionName: 'suffix'
+        }),
+        publicClient.readContract({
+          address: KYC_SBT_ADDRESS,
+          abi: KycSBTAbi,
+          functionName: 'validityPeriod'
         })
       ])
 
       return {
-        registrationFee: fee,
+        registrationFee,
+        ensFee,
         minNameLength: minLength,
-        suffix
+        suffix,
+        validityPeriod
       }
     } catch (error) {
       console.error('Error getting contract config:', error)

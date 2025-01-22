@@ -24,15 +24,31 @@ export class UserOperations {
     })
   }
 
+  async getTotalFee() {
+    try { 
+      const fee = await publicClient.readContract({
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
+        functionName: 'getTotalFee',
+      })
+      console.log('Total fee:', fee)
+      return fee as bigint
+    } catch (error) {
+      console.error('Error getting total fee:', error)
+      throw error
+    }
+  }
+
   async requestKyc(ensName: string) {
     try {
+      const totalFee = await this.getTotalFee()
       const { request } = await publicClient.simulateContract({
         address: KYC_SBT_ADDRESS,
         abi: KycSBTAbi,
         functionName: 'requestKyc',
         args: [ensName],
         account: this.account,
-        value: parseEther('0.01')
+        value: totalFee
       })
 
       const hash = await this.client.writeContract(request)
