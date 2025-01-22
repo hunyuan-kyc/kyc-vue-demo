@@ -16,10 +16,8 @@ import { type KycInfo, KycLevel, KycStatus } from '../types/index'
 
 /**
  * KYC Status Definition:
- * - NONE (0): Not requested or initialized
- * - PENDING (1): KYC request submitted, waiting for approval
- * - APPROVED (2): KYC verification approved
- * - REVOKED (3): KYC verification revoked
+ * - APPROVED (1): KYC verification approved
+ * - REVOKED (2): KYC verification revoked
  */
 
 // Initialize public client for read operations
@@ -126,8 +124,11 @@ export const contractCode = `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 interface IKycSBT {
+    // @dev KYC levels from lowest to highest
     enum KycLevel { NONE, BASIC, ADVANCED, PREMIUM, ULTIMATE }
-    enum KycStatus { NONE, PENDING, APPROVED, REVOKED }
+    
+    // @dev Only store APPROVED(1) and REVOKED(2) on-chain
+    enum KycStatus { NONE, APPROVED, REVOKED }
 
     // Events
     event KycRequested(address indexed user, string ensName);
@@ -139,6 +140,7 @@ interface IKycSBT {
     event ValidityPeriodUpdated(uint256 newPeriod);
     event RegistrationFeeUpdated(uint256 newFee);
     event EnsFeeUpdated(uint256 newFee);
+    event EnsNameApproved(address indexed user, string ensName);
 
     // Core functions
     function requestKyc(string calldata ensName) external payable;
@@ -152,9 +154,12 @@ interface IKycSBT {
         uint256 createTime
     );
 
+    // ENS name approval functions
+    function approveEnsName(address user, string calldata ensName) external;
+    function isEnsNameApproved(address user, string calldata ensName) external view returns (bool);
+
     // Configuration functions
     function setValidityPeriod(uint256 newPeriod) external;
-    function approveKyc(address user) external;
     function setRegistrationFee(uint256 newFee) external;
     function setEnsFee(uint256 newFee) external;
     function getTotalFee() external view returns (uint256);
@@ -171,7 +176,7 @@ contract KycDemo {
     event KycRequested(address indexed user, string ensName);
     event KycRevoked(address indexed user);
     event KycRestored(address indexed user);
-    event HumanVerified(address indexed user, bool isHuman, uint8 level);
+    event EnsNameApproved(address indexed user, string ensName);
     
     constructor(address _kycSBT) {
         kycSBT = IKycSBT(_kycSBT);
@@ -198,5 +203,15 @@ contract KycDemo {
         uint256 createTime
     ) {
         return kycSBT.getKycInfo(account);
+    }
+
+    /**
+     * @notice Check if an ENS name is approved for a user
+     * @param user Address to check
+     * @param ensName ENS name to verify
+     * @return bool Whether the ENS name is approved
+     */
+    function checkEnsNameApproval(address user, string calldata ensName) external view returns (bool) {
+        return kycSBT.isEnsNameApproved(user, ensName);
     }
 } ` 

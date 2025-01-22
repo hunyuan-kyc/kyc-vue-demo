@@ -162,26 +162,6 @@ export class OwnerOperations {
     }
   }
 
-  async approveKyc(user: Address) {
-    try {
-      const { request } = await publicClient.simulateContract({
-        address: KYC_SBT_ADDRESS,
-        abi: KycSBTAbi,
-        functionName: 'approveKyc',
-        args: [user],
-        account: this.account
-      })
-
-      const hash = await this.client.writeContract(request)
-      const receipt = await publicClient.waitForTransactionReceipt({ hash })
-      console.log('KYC approved:', receipt)
-      return receipt
-    } catch (error) {
-      console.error('Error approving KYC:', error)
-      throw error
-    }
-  }
-
   async getContractConfig() {
     try {
       const [registrationFee, ensFee, minLength, suffix, validityPeriod] = await Promise.all([
@@ -221,6 +201,52 @@ export class OwnerOperations {
       }
     } catch (error) {
       console.error('Error getting contract config:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Approve ENS name for a user
+   * @param user - User address
+   * @param ensName - ENS name to approve (without suffix)
+   */
+  async approveEnsName(user: Address, ensName: string) {
+    try {
+      const { request } = await publicClient.simulateContract({
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
+        functionName: 'approveEnsName',
+        args: [user, ensName],
+        account: this.account
+      })
+
+      const hash = await this.client.writeContract(request)
+      const receipt = await publicClient.waitForTransactionReceipt({ hash })
+      console.log('ENS name approved:', receipt)
+      return receipt
+    } catch (error) {
+      console.error('Error approving ENS name:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Check if ENS name is approved for a user
+   * @param user - User address
+   * @param ensName - ENS name to check (without suffix)
+   * @returns boolean indicating if the ENS name is approved
+   */
+  async isEnsNameApproved(user: Address, ensName: string): Promise<boolean> {
+    try {
+      const isApproved = await publicClient.readContract({
+        address: KYC_SBT_ADDRESS,
+        abi: KycSBTAbi,
+        functionName: 'isEnsNameApproved',
+        args: [user, ensName]
+      })
+      return isApproved as boolean
+    } catch (error) {
+      console.error('Error checking ENS name approval:', error)
       throw error
     }
   }

@@ -8,7 +8,6 @@ export enum KycLevel {
 
 export enum KycStatus {
   NONE,
-  PENDING,
   APPROVED,
   REVOKED
 }

@@ -368,7 +368,6 @@ export default {
     const getKycStatusText = (status: KycStatus) => {
       const statusMap: Record<KycStatus, string> = {
         [KycStatus.NONE]: 'None',
-        [KycStatus.PENDING]: 'Pending',
         [KycStatus.APPROVED]: 'Approved',
         [KycStatus.REVOKED]: 'Revoked'
       }
