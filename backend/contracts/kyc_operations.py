@@ -3,6 +3,16 @@ from eth_typing import Address
 from typing import Tuple, Dict, Any
 from decimal import Decimal
 import json
+import os
+
+TESTNET = True
+
+if TESTNET:
+    RPC_URL = 'https://hashkeychain-testnet.alt.technology'
+    CONTRACT_ADDRESS = "0xC4fd036Df0f5f3375C0117995793625059de656B"
+else:
+    RPC_URL = 'https://mainnet.hsk.xyz'
+    CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000" # TODO: get mainnet contract address
 
 class KycOperations:
     def __init__(self, web3: Web3, contract_address: str, private_key: str = None):
@@ -10,7 +20,7 @@ class KycOperations:
         self.contract_address = Web3.to_checksum_address(contract_address)
         
         # Load ABI
-        with open('abis/KycSBT.json', 'r') as f:
+        with open('KycSBT.json', 'r') as f:
             self.contract_abi = json.load(f)
         
         self.contract = self.web3.eth.contract(
@@ -140,6 +150,27 @@ class OwnerOperations(KycOperations):
             print(f"Error approving KYC: {e}")
             raise
 
+    def revoke_kyc(self, user_address: str) -> Dict[str, Any]:
+        """Revoke KYC for a user"""
+        if not self.account:
+            raise Exception("Private key not provided")
+            
+        try:
+            user_address = Web3.to_checksum_address(user_address)
+            tx = self.contract.functions.revokeKyc(user_address).build_transaction({
+                'from': self.account.address,
+                'nonce': self.web3.eth.get_transaction_count(self.account.address),
+                'gas': 2000000,
+                'gasPrice': self.web3.eth.gas_price
+            })
+            
+            signed_tx = self.account.sign_transaction(tx)
+            tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+            return self.web3.eth.wait_for_transaction_receipt(tx_hash)
+        except Exception as e:
+            print(f"Error revokeKyc KYC: {e}")
+            raise
+
     def get_contract_config(self) -> Dict[str, Any]:
         """Get contract configuration"""
         try:
@@ -154,18 +185,28 @@ class OwnerOperations(KycOperations):
             print(f"Error getting contract config: {e}")
             raise
 
+def get_owner_ops():
+    w3 = Web3(Web3.HTTPProvider(RPC_URL))
+    return OwnerOperations(w3, CONTRACT_ADDRESS, private_key=os.getenv("PRIVATE_KEY"))
+
+def get_user_ops():
+    w3 = Web3(Web3.HTTPProvider(RPC_URL))
+    return UserOperations(w3, CONTRACT_ADDRESS)
+
+def owner_approve_kyc(address):
+    owner_ops = get_owner_ops()
+    owner_ops.approve_kyc(address)
+
+def owner_revoke_kyc(address):
+    owner_ops = get_owner_ops()
+    owner_ops.revoke_kyc(address)
+
+def user_get_kyc_info(address):
+    user_ops = get_user_ops()
+    kyc_info = user_ops.get_kyc_info(address)
+    print(f"KYC Info: {kyc_info}")
+
 # Usage example:
 if __name__ == "__main__":
-    # Initialize Web3
-    w3 = Web3(Web3.HTTPProvider('https://hk-testnet.rpc.alt.technology'))
-    
-    # Contract address from environment
-    CONTRACT_ADDRESS = "0xC4fd036Df0f5f3375C0117995793625059de656B"
-    
-    # Initialize operations
-    user_ops = UserOperations(w3, CONTRACT_ADDRESS)
-    
-    # Example: Get KYC info
-    address = "0x123..."
-    kyc_info = user_ops.get_kyc_info(address)
-    print(f"KYC Info: {kyc_info}") 
+    owner_revoke_kyc("0xe5107dee9CcC8054210FF6129cE15Eaa5bbcB1c0")
+    user_get_kyc_info("0xe5107dee9CcC8054210FF6129cE15Eaa5bbcB1c0")
