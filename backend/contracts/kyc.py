@@ -172,7 +172,70 @@ class OwnerOperations(KycOperations):
         except Exception as e:
             print(f"Error approving ENS name: {e}")
             raise
+    def approve_kyc(self, user: str, level: int) -> Dict[str, Any]:
+        """Approve KYC verification for a user with specified level"""
+        if not self.account:
+            raise Exception("Private key not provided")
+        
+        try:
+            # 构建批准KYC的交易
+            tx = self.contract.functions.approveKyc(
+                self.web3.to_checksum_address(user),  # 确保地址格式正确
+                level
+            ).build_transaction({
+                'from': self.account.address,
+                'nonce': self.web3.eth.get_transaction_count(self.account.address),
+                'gas': 2000000,
+                'gasPrice': self.web3.eth.gas_price
+            })
+            
+            # 签名并发送交易
+            signed_tx = self.account.sign_transaction(tx)
+            tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+            
+            # 等待交易确认
+            receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+            return receipt
+        except Exception as e:
+            print(f"Error approving KYC: {e}")
+            raise
+      def revoke_kyc(self, user: str) -> Dict[str, Any]:
+        """
+        Revoke KYC verification for a specific user.
 
+        Args:
+            user (str): The Ethereum address of the user whose KYC is to be revoked.
+
+        Returns:
+            Dict[str, Any]: The transaction receipt.
+
+        Raises:
+            Exception: If the private key is not provided or the transaction fails.
+        """
+        if not self.account:
+            raise Exception("Private key not provided")
+        
+        try:
+            # Build the transaction
+            tx = self.contract.functions.revokeKyc(
+                self.web3.to_checksum_address(user)  # Ensure the address is in checksum format
+            ).build_transaction({
+                'from': self.account.address,
+                'nonce': self.web3.eth.get_transaction_count(self.account.address),
+                'gas': 2000000,  # Adjust gas limit as needed
+                'gasPrice': self.web3.eth.gas_price
+            })
+            
+            # Sign and send the transaction
+            signed_tx = self.account.sign_transaction(tx)
+            tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+            
+            # Wait for the transaction receipt
+            receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+            return receipt
+        except Exception as e:
+            print(f"Error revoking KYC: {e}")
+            raise
     def is_ens_name_approved(self, user: str, ens_name: str) -> bool:
         """Check if ENS name is approved for a user"""
         try:
@@ -202,7 +265,7 @@ if __name__ == "__main__":
     w3 = Web3(Web3.HTTPProvider('https://hk-testnet.rpc.alt.technology'))
     
     # Contract address from environment
-    CONTRACT_ADDRESS = "0xC4fd036Df0f5f3375C0117995793625059de656B"
+    CONTRACT_ADDRESS = "0xe2854Bd5C725f1237e2D34b118ac93b41b38762A"
     
     # Initialize operations
     user_ops = UserOperations(w3, CONTRACT_ADDRESS)
