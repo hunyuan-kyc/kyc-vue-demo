@@ -26,5 +26,6 @@ dist-ssr
 dist
 
 # # Environment files
-# .env.local
-# .env.*.local
+.env.local
+.env.*.local
+.env

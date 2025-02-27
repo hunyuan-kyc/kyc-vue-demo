@@ -94,13 +94,12 @@
 </template>
 
 <script lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, inject } from 'vue';
 import { useDisconnect, useAppKit, useAppKitNetwork } from "@reown/appkit/vue";
 import { networks } from "../config/index";
 import { createPublicClient, createWalletClient, custom, parseEther, formatEther } from 'viem'
 import { hashkeyTestnet } from '@reown/appkit/networks'
 import KycSBTAbi from '../abis/KycSBT.json'
-import { KYC_SBT_ADDRESS } from '../config/contracts'
 import { KycLevel, KycStatus } from '../types/kyc'
 import type { KycInfo } from '../types/kyc'
 
@@ -122,6 +121,9 @@ export default {
       status: KycStatus.NONE,
       createTime: 0n,
     });
+
+    // Inject KYC_SBT_ADDRESS from App.vue
+    const KYC_SBT_ADDRESS = inject('KYC_SBT_ADDRESS') as `0x${string}`;
 
     const openAppKit = () => open();
     const switchToNetwork = () => networkData.value.switchNetwork(networks[1]);

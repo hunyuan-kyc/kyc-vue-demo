@@ -2,6 +2,11 @@
    <div class="pages">
       <h1>HunYuan on-chain KYC integration demo</h1>
 
+      <select v-model="isTestnet" @change="changeEnvironment">
+        <option value="true">测试环境</option>
+        <option value="false">主网</option>
+      </select>
+
       <appkit-button />
       <ActionButtonList />
       <!-- <InfoList /> -->
@@ -36,6 +41,12 @@
             <pre><code v-html="highlightedContractCode"></code></pre>
          </div>
       </div>
+
+      <!-- Download Link for PDF -->
+      <div class="download-section">
+         <h2>Download Smart Contract Audit Report</h2>
+         <a href="/Smart Contract Audit Report 20250220(1).pdf" download class="download-btn">Download PDF</a>
+      </div>
     </div>
 </template>
 
@@ -44,10 +55,10 @@
 import {
   createAppKit,
 } from '@reown/appkit/vue'
-import {wagmiAdapter , networks, projectId } from './config/index'
+import { wagmiAdapter , networks, projectId } from './config/index'
 // @ts-ignore
 import ClipboardJS from 'clipboard'
-import { onMounted } from 'vue'
+import { onMounted, ref, computed, provide } from 'vue'
 
 import ActionButtonList from "./components/ActionButton.vue"
 import InfoList from "./components/InfoList.vue"
@@ -76,7 +87,48 @@ export default {
     InfoList
   },
   setup() {
-    // 高亮处理
+    const selectedNetwork = ref('hashkeyTestnet'); // 默认选择的网络
+    const isTestnet = ref(true); // 默认选择测试环境
+
+    const changeNetwork = () => {
+      console.log('切换到网络:', selectedNetwork.value);
+      // 这里可以添加切换网络的逻辑
+    };
+
+    const changeEnvironment = () => {
+      console.log('切换到环境:', isTestnet.value);
+      // 这里可以添加切换环境的逻辑
+      selectedNetwork.value = isTestnet.value ? 'hashkeyTestnet' : 'hashkey';
+    };
+
+    // 计算合约地址
+    const KYC_SBT_ADDRESS = computed(() => {
+      return isTestnet.value 
+        ? import.meta.env.VITE_KYC_SBT_ADDRESS_TEST 
+        : import.meta.env.VITE_KYC_SBT_ADDRESS;
+    });
+
+    // 提供 KYC_SBT_ADDRESS 给子组件
+    provide('KYC_SBT_ADDRESS', KYC_SBT_ADDRESS);
+
+    const ENS_REGISTRY_ADDRESS = computed(() => {
+      return isTestnet.value 
+        ? import.meta.env.VITE_ENS_REGISTRY_ADDRESS_TEST 
+        : import.meta.env.VITE_ENS_REGISTRY_ADDRESS;
+    });
+
+    const HSK_NODE = computed(() => {
+      return isTestnet.value 
+        ? import.meta.env.VITE_HSK_NODE_TEST 
+        : import.meta.env.VITE_HSK_NODE;
+    });
+
+    const KYC_RESOLVER_ADDRESS = computed(() => {
+      return isTestnet.value 
+        ? import.meta.env.VITE_KYC_RESOLVER_ADDRESS_TEST 
+        : import.meta.env.VITE_KYC_RESOLVER_ADDRESS;
+    });
+
     const highlightedFrontendCode = hljs.highlight(
       frontendCode,
       { language: 'typescript' }
@@ -102,7 +154,15 @@ export default {
       frontendCode,
       contractCode,
       highlightedFrontendCode,
-      highlightedContractCode
+      highlightedContractCode,
+      selectedNetwork,
+      isTestnet,
+      changeNetwork,
+      changeEnvironment,
+      KYC_SBT_ADDRESS,
+      ENS_REGISTRY_ADDRESS,
+      HSK_NODE,
+      KYC_RESOLVER_ADDRESS
     }
   }
 }
@@ -189,5 +249,27 @@ pre::-webkit-scrollbar-thumb:hover {
 
 .copy-btn:hover {
   background: #666;
+}
+
+.download-section {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.download-btn {
+  padding: 6px 12px;
+  background: #4a90e2; /* Blue background */
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none; /* Remove underline */
+  display: inline-block; /* Make it behave like a button */
+  transition: background 0.2s;
+}
+
+.download-btn:hover {
+  background: #357ABD; /* Darker blue on hover */
 }
 </style>

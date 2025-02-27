@@ -1,8 +1,13 @@
 import { createPublicClient, createWalletClient, http, type Address, type WalletClient } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { hashkeyTestnet } from 'viem/chains'
-import { KYC_SBT_ADDRESS } from '@/config/contracts'
 import KycSBTAbi from '@/abis/KycSBT.json'
+
+const isTestnet = true;
+const KYC_SBT_ADDRESS = isTestnet 
+  ? import.meta.env.VITE_KYC_SBT_ADDRESS_TEST as `0x${string}` 
+  : import.meta.env.VITE_KYC_SBT_ADDRESS as `0x${string}`;
+
 
 const publicClient = createPublicClient({
   chain: hashkeyTestnet,
@@ -26,7 +31,7 @@ export class OwnerOperations {
   async setRegistrationFee(newFee: string) {
     try {
       const { request } = await publicClient.simulateContract({
-        address: KYC_SBT_ADDRESS,
+        address: KYC_SBT_ADDRESS as `0x${string}`,
         abi: KycSBTAbi,
         functionName: 'setRegistrationFee',
         args: [newFee],

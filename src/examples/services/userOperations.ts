@@ -1,9 +1,13 @@
 import { createPublicClient, createWalletClient, http, type Address, type WalletClient, parseEther } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { hashkeyTestnet } from 'viem/chains'
-import { KYC_SBT_ADDRESS } from '@/config/contracts'
 import KycSBTAbi from '@/abis/KycSBT.json'
 import { type KycInfo, KycLevel, KycStatus } from '../types/index'
+
+const isTestnet = import.meta.env.VITE_USE_TESTNET === 'true'; // 从环境变量中读取是否使用测试网
+const KYC_SBT_ADDRESS = isTestnet 
+  ? import.meta.env.VITE_KYC_SBT_ADDRESS_TEST as `0x${string}` 
+  : import.meta.env.VITE_KYC_SBT_ADDRESS as `0x${string}`;
 
 const publicClient = createPublicClient({
   chain: hashkeyTestnet,
