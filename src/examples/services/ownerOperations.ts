@@ -1,12 +1,12 @@
 import { createPublicClient, createWalletClient, http, type Address, type WalletClient } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import { hashkeyTestnet } from 'viem/chains'
+import { hashkey } from 'viem/chains'
 import { KYC_SBT_ADDRESS } from '@/config/contracts'
 import KycSBTAbi from '@/abis/KycSBT.json'
 
 const publicClient = createPublicClient({
-  chain: hashkeyTestnet,
-  transport: http('https://hk-testnet.rpc.alt.technology')
+  chain: hashkey,
+  transport: http('https://mainnet.hsk.xyz')
 })
 
 export class OwnerOperations {
@@ -18,8 +18,8 @@ export class OwnerOperations {
     this.account = account.address
     this.client = createWalletClient({
       account,
-      chain: hashkeyTestnet,
-      transport: http('https://hk-testnet.rpc.alt.technology')
+      chain: hashkey,
+      transport: http('https://mainnet.hsk.xyz')
     })
   }
 

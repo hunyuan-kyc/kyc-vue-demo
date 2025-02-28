@@ -1,6 +1,6 @@
 export const frontendCode = `import { createPublicClient, createWalletClient, http, type Address, type WalletClient, parseEther } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import { hashkeyTestnet } from 'viem/chains'
+import { hashkey } from 'viem/chains'
 import { KYC_SBT_ADDRESS } from '@/config/contracts'
 import KycSBTAbi from '@/abis/KycSBT.json'
 import { type KycInfo, KycLevel, KycStatus } from '../types/index'
@@ -24,8 +24,8 @@ import { type KycInfo, KycLevel, KycStatus } from '../types/index'
 
 // Initialize public client for read operations
 const publicClient = createPublicClient({
-  chain: hashkeyTestnet,
-  transport: http('https://hk-testnet.rpc.alt.technology')
+  chain: hashkey,
+  transport: http('https://mainnet.hsk.xyz')
 })
 
 export class UserOperations {
@@ -37,8 +37,8 @@ export class UserOperations {
     this.account = account.address
     this.client = createWalletClient({
       account,
-      chain: hashkeyTestnet,
-      transport: http('https://hk-testnet.rpc.alt.technology')
+      chain: hashkey,
+      transport: http('https://mainnet.hsk.xyz')
     })
   }
 
