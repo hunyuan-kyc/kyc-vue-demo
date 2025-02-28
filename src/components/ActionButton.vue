@@ -98,7 +98,7 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { useDisconnect, useAppKit, useAppKitNetwork } from "@reown/appkit/vue";
 import { networks } from "../config/index";
 import { createPublicClient, createWalletClient, custom, parseEther, formatEther } from 'viem'
-import { hashkey } from '@reown/appkit/networks'
+import { hashkey } from '@/config/index'
 import KycSBTAbi from '../abis/KycSBT.json'
 import { KYC_SBT_ADDRESS } from '../config/contracts'
 import { KycLevel, KycStatus } from '../types/kyc'
@@ -131,6 +131,7 @@ export default {
         throw new Error('Please install MetaMask!')
       }
       return createPublicClient({
+        // @ts-ignore
         chain: hashkey,
         // @ts-ignore
         transport: custom(window.ethereum)
@@ -142,6 +143,7 @@ export default {
         throw new Error('Please install MetaMask!')
       }
       return createWalletClient({
+        // @ts-ignore
         chain: hashkey,
         // @ts-ignore
         transport: custom(window.ethereum)
