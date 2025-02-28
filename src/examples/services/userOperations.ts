@@ -1,5 +1,6 @@
 import { createPublicClient, createWalletClient, http, type Address, type WalletClient, parseEther } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
+// @ts-ignore
 import { hashkey } from 'viem/chains'
 import { KYC_SBT_ADDRESS } from '@/config/contracts'
 import KycSBTAbi from '@/abis/KycSBT.json'
