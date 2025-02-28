@@ -13,7 +13,7 @@
     <div class="contract-info">
       <p>Contract Address: 
         <a 
-          :href="`https://hashkeychain-testnet-explorer.alt.technology/address/${KYC_SBT_ADDRESS}`" 
+          :href="`https://hashkey.blockscout.com/address/${KYC_SBT_ADDRESS}`" 
           target="_blank"
           rel="noopener noreferrer"
         >
